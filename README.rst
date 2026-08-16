@@ -5,7 +5,8 @@ Classroom / Student Version
 ---------------------------
 
 If you are using this repository for the system-comprehension
-classroom exercise, start with `STUDENT_GUIDE.md`.
+classroom exercise, start with the `Student Guide <STUDENT_GUIDE.md>`_ .
+.
 
 The original django-helpdesk documentation continues below.
 
