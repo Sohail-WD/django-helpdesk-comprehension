@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ demo.organization.name }} — {{ demo.organization.tagline }}</title>
+  <style>
+    :root {
+      --primary: {{ demo.organization.primary_color }};
+      --accent: {{ demo.organization.accent_color }};
+      --paper: #ffffff;
+      --ink: #20252b;
+      --muted: #66717d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #f5f7fa;
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 3rem 1.5rem;
+    }
+    header div, main { max-width: 980px; margin: auto; }
+    h1 { margin: 0 0 .4rem; font-size: 2.5rem; }
+    header p { margin: 0; opacity: .9; font-size: 1.1rem; }
+    main { padding: 2rem 1.5rem 4rem; }
+    .intro { margin-bottom: 1.5rem; color: var(--muted); }
+    .roles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--paper);
+      border-radius: 12px;
+      padding: 1.4rem;
+      box-shadow: 0 4px 18px rgba(0,0,0,.07);
+      border-top: 5px solid var(--accent);
+    }
+    .card h2 { margin-top: 0; }
+    a.button {
+      display: inline-block;
+      margin-top: .8rem;
+      padding: .7rem 1rem;
+      border-radius: 7px;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    code { background: #eef1f4; padding: .12rem .3rem; border-radius: 4px; }
+    .credentials { font-size: .92rem; color: var(--muted); line-height: 1.6; }
+
+    .message {
+    margin-bottom: 1.5rem;
+    padding: 0.9rem 1rem;
+    background: #eef7ee;
+    border: 1px solid #bad8ba;
+    border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>{{ demo.organization.name }}</h1>
+    <p>{{ demo.organization.tagline }} · {{ demo.organization.welcome_message }}</p>
+  </div>
+</header>
+
+<main>
+  {% if messages %}
+    {% for message in messages %}
+        <div class="message">
+            {{ message }}
+        </div>
+    {% endfor %}
+  {% endif %}
+
+  <p class="intro">
+    Choose a role. In class, rotate roles so that everyone experiences the
+    system from more than one perspective.
+  </p>
+
+  <section class="roles">
+    <article class="card">
+      <h2>Customer</h2>
+      <p>Raise a support request, return later, and track its status and updates.</p>
+      <div class="credentials">
+        Maya: <code>maya / demo123</code><br>
+        Rahul: <code>rahul / demo123</code>
+      </div>
+      <a class="button" href="{% url 'customer-entry' %}">Enter as customer</a>
+    </article>
+
+    <article class="card">
+      <h2>Support agent</h2>
+      <p>See incoming work, take ownership, add updates, and resolve tickets.</p>
+      <div class="credentials">
+        Anita: <code>anita / demo123</code><br>
+        Vikram: <code>vikram / demo123</code>
+      </div>
+      <a class="button" href="{% url 'agent-entry' %}">Enter as agent</a>
+    </article>
+
+    <article class="card">
+      <h2>Support manager</h2>
+      <p>Observe the operation and use Django admin to inspect or administer the system.</p>
+      <div class="credentials">
+        Meera: <code>manager / demo123</code>
+      </div>
+      <a class="button" href="{% url 'manager-entry' %}">Enter as manager</a>
+    </article>
+  </section>
+</main>
+</body>
+</html>
