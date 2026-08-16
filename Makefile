@@ -9,6 +9,7 @@ UV = uv
 PIP = pip3
 TOX = tox
 
+PYTHON ?= python # Change this if your python is called something else. 
 
 REQUIRED_BINS := node
 $(foreach bin,$(REQUIRED_BINS),\
@@ -118,6 +119,20 @@ demo:
 .PHONY: rundemo
 rundemo: demo
 	uv run manage.py runserver 8080
+
+#: student-setup - Set up the classroom student demo.
+.PHONY: student-setup
+student-setup:
+	yarn install
+	$(MAKE) static-vendor
+	$(PYTHON) student_demo/manage.py migrate
+	$(PYTHON) student_demo/manage.py load_demo
+
+
+#: student-run - Run the classroom student demo server.
+.PHONY: student-run
+student-run:
+	$(PYTHON) student_demo/manage.py runserver
 
 #: migrations - Create Django migrations for this project.
 .PHONY: migrations
