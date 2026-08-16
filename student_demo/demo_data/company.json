@@ -1,0 +1,103 @@
+{
+  "organization": {
+    "name": "Northstar Services",
+    "tagline": "Internal Support Desk",
+    "primary_color": "#2457A7",
+    "accent_color": "#E9A23B",
+    "welcome_message": "One place for everyday workplace support."
+  },
+  "users": {
+    "customers": [
+      {
+        "username": "maya",
+        "password": "demo123",
+        "first_name": "Maya",
+        "last_name": "Sen",
+        "email": "maya@northstar.example",
+        "role_label": "Customer"
+      },
+      {
+        "username": "rahul",
+        "password": "demo123",
+        "first_name": "Rahul",
+        "last_name": "Mehta",
+        "email": "rahul@northstar.example",
+        "role_label": "Customer"
+      }
+    ],
+    "agents": [
+      {
+        "username": "anita",
+        "password": "demo123",
+        "first_name": "Anita",
+        "last_name": "Shah",
+        "email": "anita@northstar.example",
+        "role_label": "Support agent"
+      },
+      {
+        "username": "vikram",
+        "password": "demo123",
+        "first_name": "Vikram",
+        "last_name": "Rao",
+        "email": "vikram@northstar.example",
+        "role_label": "Support agent"
+      }
+    ],
+    "manager": {
+      "username": "manager",
+      "password": "demo123",
+      "first_name": "Meera",
+      "last_name": "Kapoor",
+      "email": "meera@northstar.example",
+      "role_label": "Support manager"
+    }
+  },
+  "queues": [
+    {
+      "name": "IT Support",
+      "slug": "IT",
+      "email": "it-support@northstar.example",
+      "default_owner": "anita"
+    },
+    {
+      "name": "Workplace & Facilities",
+      "slug": "FAC",
+      "email": "facilities@northstar.example",
+      "default_owner": "vikram"
+    },
+    {
+      "name": "People Operations",
+      "slug": "PEOPLE",
+      "email": "people@northstar.example"
+    }
+  ],
+  "tickets": [
+    {
+      "title": "Laptop cannot connect to office Wi-Fi",
+      "queue": "IT",
+      "submitter": "maya",
+      "assigned_to": "anita",
+      "status": "open",
+      "priority": 3,
+      "description": "My laptop connects to the guest network but not the Northstar staff Wi-Fi."
+    },
+    {
+      "title": "Meeting-room projector is flickering",
+      "queue": "FAC",
+      "submitter": "rahul",
+      "assigned_to": "vikram",
+      "status": "resolved",
+      "priority": 3,
+      "description": "The projector in Meeting Room 2 starts flickering after a few minutes.",
+      "resolution": "The HDMI cable was replaced and the projector tested successfully."
+    },
+    {
+      "title": "Need access to the expense portal",
+      "queue": "PEOPLE",
+      "submitter": "rahul",
+      "status": "open",
+      "priority": 4,
+      "description": "I joined last week and cannot yet open the employee expense portal."
+    }
+  ]
+}

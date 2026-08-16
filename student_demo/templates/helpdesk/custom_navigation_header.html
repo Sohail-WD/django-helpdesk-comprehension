@@ -1,0 +1,32 @@
+<style>
+  :root {
+    --demo-primary: {{ demo_company.primary_color }};
+    --demo-accent: {{ demo_company.accent_color }};
+  }
+
+  .demo-company-bar {
+    background: var(--demo-accent);
+    color: #20252b;
+    padding: .35rem 1rem;
+    font-size: .9rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+  }
+
+  nav.navbar.bg-dark {
+    background-color: var(--demo-primary) !important;
+  }
+
+  .btn-primary {
+    background-color: var(--demo-primary);
+    border-color: var(--demo-primary);
+  }
+
+  a {
+    --bs-link-color: var(--demo-primary);
+  }
+</style>
+
+<div class="demo-company-bar">
+  {{ demo_company.name }} · {{ demo_company.tagline }}
+</div>

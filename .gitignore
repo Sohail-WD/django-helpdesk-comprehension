@@ -63,3 +63,10 @@ demodesk/db.sqlite3
 .vscode/
 .cursor/
 .devcontainer/
+
+# Mac file
+.DS_Store
+
+# new demo project sqlite file. 
+student_demo/db.sqlite3
+

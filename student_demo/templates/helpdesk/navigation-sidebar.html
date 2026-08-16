@@ -1,0 +1,40 @@
+{% load i18n helpdesk_staff %}
+
+{% if user.is_authenticated and not user|is_helpdesk_staff %}
+
+    <ul class="sidebar navbar-nav">
+
+        <li class="nav-item{% if 'my-tickets' in request.path %} active{% endif %}">
+            <a class="nav-link" href="{% url 'helpdesk:my-tickets' %}">
+                <i class="fas fa-fw fa-tasks"></i>
+                <span>{% trans "My Tickets" %}</span>
+            </a>
+        </li>
+
+        <li class="nav-item{% if 'submit' in request.path %} active{% endif %}">
+            <a class="nav-link" href="{% url 'helpdesk:submit' %}">
+                <i class="fas fa-fw fa-plus-circle"></i>
+                <span>{% trans "Submit Ticket" %}</span>
+            </a>
+        </li>
+
+        <li class="nav-item px-3 mt-3">
+            <form action="{% url 'helpdesk:logout' %}" method="post">
+                {% csrf_token %}
+
+                <button
+                    class="btn btn-outline-light btn-sm w-100"
+                    type="submit"
+                >
+                    {% trans "Logout" %}
+                </button>
+            </form>
+        </li>
+
+    </ul>
+
+{% else %}
+
+    {% include "helpdesk/navigation-sidebar-original.html" %}
+
+{% endif %}
