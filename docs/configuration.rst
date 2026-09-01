@@ -1,9 +1,7 @@
 Configuration
 =============
 
-.. note::
-
-  Any tickets created via POP3 or IMAP mailboxes will DELETE the original e-mail from the mail server.
+   **IMPORTANT NOTE**: Any tickets created via POP3 or IMAP mailboxes will DELETE the original e-mail from the mail server.
 
 Before django-helpdesk will be much use, you need to do some basic configuration. Most of this is done via the Django admin screens.
 
@@ -21,14 +19,15 @@ Before django-helpdesk will be much use, you need to do some basic configuration
 
    You will need to create a support queue, and associated login/host values, in the Django admin interface, in order for mail to be picked-up from the mail server and placed in the tickets table of your database. The values in the settings file alone, will not create the necessary values to trigger the get_email function.
 
-   If you wish to use ``celery`` instead of ``cron``, install the optional dependencies with ``pip install django-helpdesk[celery]``, add ``django_celery_beat`` to ``INSTALLED_APPS``, and add a periodic celery task through the Django admin pointing at ``helpdesk.tasks.helpdesk_process_email``.
+ If you wish to use `celery` instead of cron, install the optional dependencies with ``pip install django-helpdesk[celery]``, add 'django_celery_beat' to `INSTALLED_APPS`, and add a periodic celery task through the Django admin pointing at ``helpdesk.tasks.helpdesk_process_email``.
 
    You will need to create a support queue, and associated login/host values, in the Django admin interface, in order for mail to be picked-up from the mail server and placed in the tickets table of your database. The values in the settings file alone, will not create the necessary values to trigger the get_email function.
-
-   **Debugging Email Extraction**
-
-   You can run the management command manually from the command line with additional commands option ``debug_to_stdout``. Set this when manually running the command from a terminal so that additional debugging about which queues are being processed is written to stdout (console by default)::
-
+   
+   DEBUGGING EMAIL EXTRACTION
+   ==========================
+   You can run the management command manually from the command line with additional commands options:
+       **debug_to_stdout** - set this when manually running the command from a terminal so that additional debugging about which queues are being processed is written to stdout (console by default)
+   For example: 
        **/path/to/helpdesksite/manage.py get_email --debug_to_stdout**
 
 4. If you wish to automatically escalate tickets based on their age, set up a cronjob to run the escalation command on a regular basis::
@@ -49,17 +48,15 @@ Before django-helpdesk will be much use, you need to do some basic configuration
 
    If you wish to temporarily pause escalations for a specific ticket (e.g., while waiting for a customer response or a third-party fix), you can put it **on hold**. This prevents the automatic escalation command from acting on that ticket.
 
-   To put a ticket on hold:
-   - In the ticket detail page, check the box labelled **On Hold** (or similar, depending on your template) and save the ticket.
+   To put a ticket on hold:  
+   - In the ticket detail page, check the box labelled *"On Hold"* (or similar, depending on your template) and save the ticket.  
 
-   .. note::
-      Important details about the "on hold" feature:
+   **Important details about the "on hold" feature:**
+   - It **only affects automatic escalations**. The `escalate_tickets` command will skip any ticket marked as "on hold".
+   - It does **not** block users from adding manual follow-ups or changing other ticket fields.
+   - The system does **not** automatically remove the "on hold" status when a new follow-up is added. You must manually uncheck the box to re-enable escalations.
 
-      - It **only affects automatic escalations**. The ``escalate_tickets`` command will skip any ticket marked as "on hold".
-      - It does **not** block users from adding manual follow-ups or changing other ticket fields.
-      - The system does **not** automatically remove the "on hold" status when a new follow-up is added. You must manually uncheck the box to re-enable escalations.
-
-      This feature is useful when you need to stop the escalation clock without losing the ticket's history or preventing manual work.
+   This feature is useful when you need to stop the escalation clock without losing the ticket's history or preventing manual work.
 
 6. Log in to your Django admin screen, and go to the 'Sites' module. If the site ``example.com`` is listed, click it and update the details so they are relevant for your website.
 
@@ -79,7 +76,7 @@ Locale
 ^^^^^^
 The *Locale* value must match the value in the ``locale`` column in the ``helpdesk_emailtemplate`` table if you wish to use those templates. For default installations/templates those values are ``cs``, ``de``, ``en``, ``es``, ``fi``, ``fr``, ``it``, ``pl``, ``ru`` and ``zh``.
 
-If you want to use a different *Locale* then you will need to generate/edit the necessary templates (and set the value in the ``locale`` column) for those locales. This includes when using language variants, such as ``de-CH``, ``en-GB`` or ``fr-CA`` for example.
+If you want to use a different *Local* then you will need to generate/edit the necessary templates (and set the value in the ``locale`` column) for those locales. This includes when using language variants, such as ``de-CH``, ``en-GB`` or ``fr-CA`` for example. 
 
 E-Mail Check Interval
 ^^^^^^^^^^^^^^^^^^^^^
@@ -103,7 +100,7 @@ The crontab interval overrides the *E-Mail Check Interval*, and resets the *E-Ma
 
 Custom Navigation Header
 ------------------------
-You may add your own site specific navigation header to be included inside the ``<body>`` tag and before django-helpdesk navbar.
+You may add your own site specific navigation header to be included inside the <body> tag and before django-helpdesk navbar.
 
 1. Create an override template in your project's templates directory::
 
@@ -114,60 +111,7 @@ You may add your own site specific navigation header to be included inside the `
 Suppressible Log Messages
 -------------------------
 Some logging messages support being switched on or off according to deployment preferences.
-The following settings variables control emitting log messages for specific scenarios
 
-``HELPDESK_LOG_WARN_WHEN_CC_EMAIL_NOT_LINKED_TO_A_USER`` (default:``False``)
-  There is no user matching the email address in the CC list.
-
-``HELPDESK_LOG_WARN_WHEN_CC_EMAIL_LINKED_TO_MORE_THAN_1_USER`` (default:``True``)
-  There is more than 1 user matching the email address in the CC list.
-
-.. _production-hardening:
-
-Production hardening
---------------------
-
-django-helpdesk does not attempt to be a hardened deployment on its own, and
-this is worth stating plainly because its default shape is unusual: unlike most
-Django applications, it ships a **public-facing login page** and a **public
-ticket submission form**, so a normal installation is reachable from the
-internet rather than sitting behind an intranet.
-
-The authentication view is a thin wrapper around
-``django.contrib.auth.views.LoginView``, so django-helpdesk inherits Django's
-behaviour and Django deliberately does not rate limit authentication. That means
-the following are the deployer's responsibility, not this project's.
-
-**Rate limiting authentication.** Nothing here limits how many login attempts an
-address may make, so an exposed instance will accept unlimited password
-guessing. Either handle it in front of the application, at your reverse proxy or
-WAF, or install a Django app that does it. `django-axes
-<https://github.com/jazzband/django-axes>`_ and `django-defender
-<https://github.com/kencochrane/django-defender>`_ are the usual choices, and
-either is preferable to us reimplementing lockout logic that would then need a
-cache backend and its own denial-of-service trade-offs.
-
-**Password policy.** Set ``AUTH_PASSWORD_VALIDATORS`` in your settings. Django
-ships validators for minimum length, common passwords and numeric-only
-passwords, and none of them apply unless you configure them.
-
-**Serving attachments.** Attachment content comes from unauthenticated third
-parties, through inbound email and through the public submission form. Do not
-serve ``MEDIA_ROOT`` in a way that renders attachments inline, and see
-``HELPDESK_VALID_EXTENSIONS`` for the extensions accepted on upload.
-
-**Transport and cookies.** Serve the site over HTTPS. If you terminate TLS at a
-proxy, set the ``SECURE_PROXY_SSL_HEADER`` *environment variable* to any
-non-empty value: django-helpdesk then sets Django's ``SECURE_PROXY_SSL_HEADER``
-to ``("HTTP_X_FORWARDED_PROTO", "https")`` and turns on
-``SESSION_COOKIE_SECURE`` and ``CSRF_COOKIE_SECURE`` for you. Without it, set
-those two yourself.
-
-**Turning off what you do not use.** ``HELPDESK_API_ENABLED = False`` removes the
-REST API routes entirely, and ``HELPDESK_SUBMIT_A_TICKET_PUBLIC = False`` removes
-the public submission form. Reducing the exposed surface is cheaper than
-defending it.
-
-Django's own `deployment checklist
-<https://docs.djangoproject.com/en/stable/howto/deployment/checklist/>`_ covers
-the rest and is worth running through before going live.
+The following settings variables control emitting log messages for specific scenarios:
+  LOG_WARN_WHEN_CC_EMAIL_NOT_LINKED_TO_A_USER - there is no user matching the email address in the CC list. Defaults to False
+  LOG_WARN_WHEN_CC_EMAIL_LINKED_TO_MORE_THAN_1_USER - there is more than 1 user matching the email address in the CC list. Defaults to True

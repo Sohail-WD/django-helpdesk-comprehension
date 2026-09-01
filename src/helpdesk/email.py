@@ -698,12 +698,8 @@ def create_object_from_email_message(message, ticket_id, payload, files, logger)
         logger.info(
             "Message seems to be auto-reply, not sending any emails back to the sender"
         )
-        f.email_recipients = []
     else:
-        f.email_recipients = sorted(
-            send_info_email(message_id, f, ticket, context, queue, new)
-        )
-    f.save()
+        send_info_email(message_id, f, ticket, context, queue, new)
     if new:
         # emit signal when a new ticket is created
         new_ticket_done.send(sender="create_object_from_email_message", ticket=ticket)
@@ -725,7 +721,6 @@ def send_info_email(
         "X-Auto-Response-Suppress": "All",
         "Precedence": "auto_reply",
     }
-    sent_to = set()
     if new:
         ticket.send(
             {
@@ -733,7 +728,6 @@ def send_info_email(
                 "new_ticket_cc": ("newticket_cc", context),
                 "ticket_cc": ("newticket_cc", context),
             },
-            sent_to=sent_to,
             fail_silently=True,
             extra_headers=extra_headers,
         )
@@ -744,18 +738,15 @@ def send_info_email(
                 "submitter": ("updated_submitter", context),
                 "assigned_to": ("updated_owner", context),
             },
-            sent_to=sent_to,
             fail_silently=True,
             extra_headers=extra_headers,
         )
         if queue.enable_notifications_on_email_events:
             ticket.send(
                 {"ticket_cc": ("updated_cc", context)},
-                sent_to=sent_to,
                 fail_silently=True,
                 extra_headers=extra_headers,
             )
-    return sent_to
 
 
 def get_ticket_id_from_subject_slug(

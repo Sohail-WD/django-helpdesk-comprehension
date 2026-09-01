@@ -128,9 +128,7 @@ class FollowUpSerializer(serializers.ModelSerializer):
             "followupattachment_set",
             "date",
             "message_id",
-            "email_recipients",
         )
-        read_only_fields = ("email_recipients",)
 
     def create(self, validated_data):
         if validated_data["user"]:

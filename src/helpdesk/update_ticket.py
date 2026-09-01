@@ -129,7 +129,6 @@ def process_email_notifications_for_ticket_update(
     messages_sent_to: set[str],
     files: list[tuple[str, str]],
     reassigned: bool = False,
-    sent_to: set[str] | None = None,
 ):
     """
     Sends email notifications when the ticket is updated in any way.
@@ -153,7 +152,6 @@ def process_email_notifications_for_ticket_update(
                     "submitter": (submitter_prefix + "submitter", context),
                 },
                 dont_send_to=messages_sent_to,
-                sent_to=sent_to,
                 fail_silently=True,
                 files=files,
             )
@@ -169,7 +167,6 @@ def process_email_notifications_for_ticket_update(
             ticket.send(
                 {"assigned_to": (template_prefix + "owner", context)},
                 dont_send_to=messages_sent_to,
-                sent_to=sent_to,
                 fail_silently=True,
                 files=files,
             )
@@ -179,7 +176,6 @@ def process_email_notifications_for_ticket_update(
         ticket.send(
             {"ticket_cc": (template_prefix + "cc", context)},
             dont_send_to=messages_sent_to,
-            sent_to=sent_to,
             fail_silently=True,
             files=files,
         )
@@ -376,19 +372,9 @@ def update_ticket(
         messages_sent_to.add(user.email)
     except AttributeError:
         pass
-    emailed_to = set()
     process_email_notifications_for_ticket_update(
-        public,
-        ticket,
-        f,
-        context,
-        messages_sent_to,
-        files,
-        reassigned=reassigned,
-        sent_to=emailed_to,
+        public, ticket, f, context, messages_sent_to, files, reassigned=reassigned
     )
-    f.email_recipients = sorted(emailed_to)
-    f.save()
     ticket.save()
 
     # emit signal with followup when the ticket update is done

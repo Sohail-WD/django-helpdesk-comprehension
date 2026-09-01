@@ -16,7 +16,6 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.views import redirect_to_login
@@ -485,15 +484,7 @@ def get_attachments_for_ticket(ticket):
 @helpdesk_staff_member_required
 def view_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-    try:
-        ticket_perm_check(request, ticket)
-    except PermissionDenied:
-        messages.error(
-            request,
-            _("You don't have permission to view ticket - %(ticket)s.")
-            % {"ticket": str(ticket)},
-        )
-        return HttpResponseRedirect(reverse("helpdesk:list"))
+    ticket_perm_check(request, ticket)
 
     if "take" in request.GET:
         update_ticket(request.user, ticket, owner=request.user.id)
@@ -855,7 +846,6 @@ def mass_update(request):
                 title=_("KBItem set in bulk update"),
                 public=False,
                 user=request.user,
-                email_recipients=[],
             )
         elif action == "close" and t.status != Ticket.CLOSED_STATUS:
             t.status = Ticket.CLOSED_STATUS
@@ -866,12 +856,11 @@ def mass_update(request):
                 public=False,
                 user=request.user,
                 new_status=Ticket.CLOSED_STATUS,
-                email_recipients=[],
             )
         elif action == "close_public" and t.status != Ticket.CLOSED_STATUS:
             t.status = Ticket.CLOSED_STATUS
             t.save()
-            followup = t.followup_set.create(
+            t.followup_set.create(
                 date=timezone.now(),
                 title=_("Closed in bulk update"),
                 public=True,
@@ -900,17 +889,13 @@ def mass_update(request):
             ):
                 roles["assigned_to"] = ("closed_owner", context)
 
-            sent_to = set()
             messages_sent_to.update(
                 t.send(
                     roles,
                     dont_send_to=messages_sent_to,
-                    sent_to=sent_to,
                     fail_silently=True,
                 )
             )
-            followup.email_recipients = sorted(sent_to)
-            followup.save()
 
         elif action == "delete":
             t.delete()
