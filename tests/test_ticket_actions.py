@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import ClassVar
 
 from django.contrib.auth import get_user_model
@@ -443,3 +444,199 @@ class TicketActionsTestCase(TestCase):
             ticket.ticketcustomfieldvalue_set.get(field=custom_field_1).value,
             custom_field_1_value,
         )
+
+    def test_edit_ticket_priority_creates_history(self):
+        """T1: Changing ticket priority via Actions -> Edit Ticket records history and acting user."""
+        self.loginUser()
+
+        ticket = Ticket.objects.create(
+            queue=self.queue_public,
+            title="Priority Edit Test Ticket",
+            description="Testing priority change",
+            priority=3,
+        )
+        self.assertEqual(ticket.followup_set.count(), 0)
+
+        post_data = {
+            "title": ticket.title,
+            "queue": ticket.queue.id,
+            "priority": 1,
+            "description": ticket.description,
+        }
+        response = self.client.post(
+            reverse("helpdesk:edit", kwargs={"ticket_id": ticket.id}),
+            post_data,
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse("helpdesk:view", kwargs={"ticket_id": ticket.id}))
+
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.priority, 1)
+
+        self.assertEqual(ticket.followup_set.count(), 1)
+        followup = ticket.followup_set.latest("date")
+        self.assertEqual(followup.user, self.user)
+
+        priority_change = followup.ticketchange_set.filter(field=_("Priority")).first()
+        self.assertIsNotNone(priority_change)
+        self.assertEqual(str(priority_change.old_value), "3")
+        self.assertEqual(str(priority_change.new_value), "1")
+
+    def test_edit_ticket_queue_creates_history(self):
+        """T2: Changing ticket queue via Actions -> Edit Ticket records history and acting user."""
+        self.loginUser()
+
+        ticket = Ticket.objects.create(
+            queue=self.queue_public,
+            title="Queue Edit Test Ticket",
+            description="Testing queue change",
+            priority=3,
+        )
+        self.assertEqual(ticket.followup_set.count(), 0)
+
+        post_data = {
+            "title": ticket.title,
+            "queue": self.queue_private.id,
+            "priority": ticket.priority,
+            "description": ticket.description,
+        }
+        response = self.client.post(
+            reverse("helpdesk:edit", kwargs={"ticket_id": ticket.id}),
+            post_data,
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse("helpdesk:view", kwargs={"ticket_id": ticket.id}))
+
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.queue, self.queue_private)
+
+        self.assertEqual(ticket.followup_set.count(), 1)
+        followup = ticket.followup_set.latest("date")
+        self.assertEqual(followup.user, self.user)
+
+        queue_change = followup.ticketchange_set.filter(field=_("Queue")).first()
+        self.assertIsNotNone(queue_change)
+        self.assertEqual(str(queue_change.old_value), str(self.queue_public.id))
+        self.assertEqual(str(queue_change.new_value), str(self.queue_private.id))
+
+    def test_edit_ticket_due_date_creates_history(self):
+        """T3: Changing ticket due date via Actions -> Edit Ticket records history and acting user."""
+        self.loginUser()
+
+        ticket = Ticket.objects.create(
+            queue=self.queue_public,
+            title="Due Date Edit Test Ticket",
+            description="Testing due date change",
+            priority=3,
+        )
+        self.assertIsNone(ticket.due_date)
+        self.assertEqual(ticket.followup_set.count(), 0)
+
+        new_due_date = (timezone.now() + timedelta(days=7)).replace(microsecond=0)
+        post_data = {
+            "title": ticket.title,
+            "queue": ticket.queue.id,
+            "priority": ticket.priority,
+            "due_date": new_due_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "description": ticket.description,
+        }
+        response = self.client.post(
+            reverse("helpdesk:edit", kwargs={"ticket_id": ticket.id}),
+            post_data,
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse("helpdesk:view", kwargs={"ticket_id": ticket.id}))
+
+        ticket.refresh_from_db()
+        self.assertIsNotNone(ticket.due_date)
+
+        self.assertEqual(ticket.followup_set.count(), 1)
+        followup = ticket.followup_set.latest("date")
+        self.assertEqual(followup.user, self.user)
+
+        due_date_change = followup.ticketchange_set.filter(field=_("Due on")).first()
+        self.assertIsNotNone(due_date_change)
+
+    def test_edit_ticket_multiple_fields_creates_history(self):
+        """T4: Changing multiple fields via Actions -> Edit Ticket records comprehensive history."""
+        self.loginUser()
+
+        custom_field = CustomField.objects.create(
+            name="notes",
+            label="Notes",
+            data_type="varchar",
+            required=False,
+        )
+
+        ticket = Ticket.objects.create(
+            queue=self.queue_public,
+            title="Original Title",
+            description="Initial Description",
+            priority=3,
+        )
+        ticket.ticketcustomfieldvalue_set.create(
+            field=custom_field,
+            value="Old note",
+        )
+        self.assertEqual(ticket.followup_set.count(), 0)
+
+        new_due_date = (timezone.now() + timedelta(days=5)).replace(microsecond=0)
+        post_data = {
+            "title": "Updated Title",
+            "queue": self.queue_private.id,
+            "priority": 2,
+            "due_date": new_due_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "description": "Updated Description",
+            "custom_notes": "New note",
+        }
+        response = self.client.post(
+            reverse("helpdesk:edit", kwargs={"ticket_id": ticket.id}),
+            post_data,
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse("helpdesk:view", kwargs={"ticket_id": ticket.id}))
+
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.title, "Updated Title")
+        self.assertEqual(ticket.queue, self.queue_private)
+        self.assertEqual(ticket.priority, 2)
+        self.assertEqual(ticket.description, "Updated Description")
+        self.assertEqual(
+            ticket.ticketcustomfieldvalue_set.get(field=custom_field).value,
+            "New note",
+        )
+
+        # Single FollowUp should be created for this entire batch edit
+        self.assertEqual(ticket.followup_set.count(), 1)
+        followup = ticket.followup_set.latest("date")
+        self.assertEqual(followup.user, self.user)
+
+        # Verify all individual ticket change records
+        changes = {c.field: (c.old_value, c.new_value) for c in followup.ticketchange_set.all()}
+        self.assertIn(str(_("Title")), changes)
+        self.assertEqual(changes[str(_("Title"))], ("Original Title", "Updated Title"))
+
+        self.assertIn(str(_("Priority")), changes)
+        self.assertEqual(changes[str(_("Priority"))], ("3", "2"))
+
+        self.assertIn(str(_("Queue")), changes)
+        self.assertEqual(
+            changes[str(_("Queue"))],
+            (str(self.queue_public.id), str(self.queue_private.id)),
+        )
+
+        self.assertIn(str(_("Description")), changes)
+        self.assertEqual(
+            changes[str(_("Description"))],
+            ("Initial Description", "Updated Description"),
+        )
+
+        self.assertIn("notes", changes)
+        self.assertEqual(changes["notes"], ("Old note", "New note"))
+
+        self.assertIn(str(_("Due on")), changes)
+

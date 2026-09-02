@@ -123,6 +123,8 @@ class EditTicketForm(CustomFieldMixin, forms.ModelForm):
             "resolution",
             "last_escalation",
             "assigned_to",
+            "secret_key",
+            "kbitem",
         )
 
     class Media:
@@ -194,6 +196,19 @@ class EditTicketForm(CustomFieldMixin, forms.ModelForm):
             self.customfield_to_field(field, instanceargs)
 
     def save(self, *args, **kwargs):
+        # if form is saved in a ticket update, it is passed
+        # a followup instance to trace custom fields changes
+        if "followup" in kwargs:
+            followup = kwargs.pop("followup", None)
+
+            for field, value in self.cleaned_data.items():
+                if field.startswith("custom_") and value != self.fields[field].initial:
+                    followup.ticketchange_set.create(
+                        field=field.replace("custom_", "", 1),
+                        old_value=self.fields[field].initial,
+                        new_value=value,
+                    )
+
         for field, value in self.cleaned_data.items():
             if field.startswith("custom_"):
                 field_name = field.replace("custom_", "", 1)
@@ -233,22 +248,6 @@ class EditTicketCustomFieldForm(EditTicketForm):
                     not in HELPDESK_SHOW_CUSTOM_FIELDS_FOLLOW_UP_LIST
                 ):
                     self.fields.pop(field, None)
-
-    def save(self, *args, **kwargs):
-        # if form is saved in a ticket update, it is passed
-        # a followup instance to trace custom fields changes
-        if "followup" in kwargs:
-            followup = kwargs.pop("followup", None)
-
-            for field, value in self.cleaned_data.items():
-                if field.startswith("custom_") and value != self.fields[field].initial:
-                    followup.ticketchange_set.create(
-                        field=field.replace("custom_", "", 1),
-                        old_value=self.fields[field].initial,
-                        new_value=value,
-                    )
-
-        super().save(*args, **kwargs)
 
     class Meta:
         model = Ticket

@@ -1362,7 +1362,22 @@ def edit_ticket(request, ticket_id):
 
     form = EditTicketForm(request.POST or None, instance=ticket)
     if form.is_valid():
-        ticket = form.save()
+        if not form.has_changed():
+            return redirect(ticket)
+
+        ticket.refresh_from_db()
+        update_ticket(
+            user=request.user,
+            ticket=ticket,
+            title=form.cleaned_data.get("title"),
+            description=form.cleaned_data.get("description"),
+            submitter_email=form.cleaned_data.get("submitter_email"),
+            queue=form.cleaned_data.get("queue").id if form.cleaned_data.get("queue") else -1,
+            priority=form.cleaned_data.get("priority", -1),
+            due_date=form.cleaned_data.get("due_date"),
+            customfields_form=form,
+            public=True,
+        )
         return redirect(ticket)
 
     return render(

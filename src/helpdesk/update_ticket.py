@@ -205,10 +205,12 @@ def update_ticket(
     queue=-1,
     new_status=None,
     time_spent=None,
-    due_date=None,
+    due_date=-1,
     new_checklists=None,
     message_id=None,
     customfields_form=None,
+    description=-1,
+    submitter_email=-1,
 ):
     # We need to allow the 'ticket' and 'queue' contexts to be applied to the
     # comment.
@@ -221,6 +223,8 @@ def update_ticket(
         queue = ticket.queue.id
     if new_status is None:
         new_status = ticket.status
+    if due_date == -1:
+        due_date = ticket.due_date
     if new_checklists is None:
         new_checklists = {}
 
@@ -317,13 +321,29 @@ def update_ticket(
         )
         ticket.queue_id = queue
 
-    if due_date and due_date != ticket.due_date:
+    if due_date != ticket.due_date:
         f.ticketchange_set.create(
             field=_("Due on"),
             old_value=ticket.due_date,
             new_value=due_date,
         )
         ticket.due_date = due_date
+
+    if description != -1 and description != ticket.description:
+        f.ticketchange_set.create(
+            field=_("Description"),
+            old_value=ticket.description,
+            new_value=description,
+        )
+        ticket.description = description
+
+    if submitter_email != -1 and submitter_email != ticket.submitter_email:
+        f.ticketchange_set.create(
+            field=_("Submitter E-Mail"),
+            old_value=ticket.submitter_email,
+            new_value=submitter_email,
+        )
+        ticket.submitter_email = submitter_email
 
     # save custom fields and ticket changes
     if customfields_form and customfields_form.is_valid():
